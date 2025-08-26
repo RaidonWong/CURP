@@ -1,0 +1,21 @@
+# 忽略日志和缓存
+*.log
+__pycache__
+*.tmp
+*.pyc
+
+# 忽略环境和数据
+venv/
+env/
+data/
+output/
+.DS_Store
+Thumbs.db
+
+# 忽略大文件（可选）
+*.zip
+*.tar.gz
+*.h5
+*.pt
+*.txt
+*.json
