@@ -189,7 +189,7 @@ else:
 sampled_with_index.sort(key=lambda x: x["original_index"])
 final_data = [item["data"] for item in sampled_with_index]
 
-# ==================== 步骤 5: 保存最终结果 ====================
+
 with open(final_output_file, 'w', encoding='utf-8') as f:
     json.dump(final_data, f, ensure_ascii=False, indent=2)
 

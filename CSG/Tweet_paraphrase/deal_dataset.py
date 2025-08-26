@@ -23,7 +23,7 @@ batch_size = 64
 random.seed(42)  # For reproducibility
 
 # ==================== Step 1: Load raw and answer data, filter short outputs ====================
-print("🔍 Step 1: Loading and filtering raw data (removing short outputs)...")
+print(" Step 1: Loading and filtering raw data (removing short outputs)...")
 
 with open(raw_path, 'r', encoding='utf-8') as f:
     raw_data = json.load(f)

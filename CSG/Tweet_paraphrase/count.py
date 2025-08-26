@@ -7,19 +7,21 @@ from rouge_score import rouge_scorer
 from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
 
-# 配置路径
+# Configuration paths
 bert_model_path = "/remote-home/share/lwang_share/models/AI-ModelScope/roberta-large/"
 qwen_model_path = "/remote-home/share/lwang_share/models/AI-ModelScope/Qwen3-Embedding-0.6B/"
 input_file = "/root/wangliang/Understanding-Generation/curp/CSG/Tweet_paraphrase/filtered_ans.json"
 
-# 设置设备
+# Set device
 device = "cuda:1" if torch.cuda.is_available() else "cpu"
+
 
 def load_data(path):
     if not os.path.exists(path):
-        raise FileNotFoundError(f"文件未找到: {path}")
+        raise FileNotFoundError(f"File not found: {path}")
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
 
 def compute_rouge(predictions, references):
     scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
@@ -31,6 +33,7 @@ def compute_rouge(predictions, references):
     avg_scores = {k: sum(v) / len(v) for k, v in scores.items()}
     return avg_scores
 
+
 def compute_rouge_individual(predictions, references):
     scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
     rouge1_scores = []
@@ -38,6 +41,7 @@ def compute_rouge_individual(predictions, references):
         score = scorer.score(ref, pred)
         rouge1_scores.append(score['rouge1'].fmeasure)
     return rouge1_scores
+
 
 def compute_bleu(predictions, references):
     references_list = [[ref.split()] for ref in references]
@@ -48,6 +52,7 @@ def compute_bleu(predictions, references):
         predictions_list,
         smoothing_function=chencherry.method1
     )
+
 
 def compute_cos_sim(predictions, references, model_path, strategy="cls", batch_size=32):
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
@@ -87,50 +92,52 @@ def compute_cos_sim(predictions, references, model_path, strategy="cls", batch_s
 
     return sum(all_cos_scores) / len(all_cos_scores) if all_cos_scores else 0.0
 
+
 def main():
     data = load_data(input_file)
 
     all_references = [item["gold"] for item in data]
     all_predictions = [item["prediction"] for item in data]
 
-    print(f"📊 原始数据共 {len(all_references)} 条")
+    print(f" Total original data: {len(all_references)} samples")
 
-    # Step 1: 计算 ROUGE-1
+    # Step 1: Compute ROUGE-1 for filtering
     rouge1_scores = compute_rouge_individual(all_predictions, all_references)
 
-    # Step 2: 过滤：长度 >= 4 且 ROUGE-1 > 0
+    # Step 2: Filter based on length and ROUGE-1 score
     filtered_refs = []
     filtered_preds = []
     for pred, ref, rouge1 in zip(all_predictions, all_references, rouge1_scores):
-        if len(pred.split()) >= 0 and len(ref.split()) >=0  and rouge1 >= 0.0:
+        if len(pred.split()) >= 0 and len(ref.split()) >= 0 and rouge1 >= 0.0:
             filtered_preds.append(pred)
             filtered_refs.append(ref)
 
-    print(f"✅ 过滤后剩余 {len(filtered_refs)} 条数据")
+    print(f"✅ After filtering: {len(filtered_refs)} samples remain")
 
-    assert len(filtered_refs) == len(filtered_preds), "过滤后数据数量不一致！"
+    assert len(filtered_refs) == len(filtered_preds), "Mismatch in number of filtered predictions and references!"
 
-    print("🔄 正在计算 ROUGE...")
+    print(" Computing ROUGE scores...")
     rouge_scores = compute_rouge(filtered_preds, filtered_refs)
 
-    print("🔄 正在计算 BLEU...")
+    print(" Computing BLEU score...")
     bleu_score = compute_bleu(filtered_preds, filtered_refs)
 
     embedding_batch_size = 32
 
-    print(f"🔄 正在计算 RoBERTa 相似度 (CLS) (batch_size={embedding_batch_size})...")
+    print(f" Computing RoBERTa similarity (CLS) (batch_size={embedding_batch_size})...")
     cos_sim_bert = compute_cos_sim(filtered_preds, filtered_refs, bert_model_path, strategy="cls", batch_size=embedding_batch_size)
 
-    print(f"🔄 正在计算 Qwen3 相似度 (EOS) (batch_size={embedding_batch_size})...")
+    print(f" Computing Qwen3 similarity (EOS) (batch_size={embedding_batch_size})...")
     cos_sim_qwen = compute_cos_sim(filtered_preds, filtered_refs, qwen_model_path, strategy="eos", batch_size=embedding_batch_size)
 
-    print("\n📈 评估结果:")
+    print("\n  Evaluation Results:")
     print(f" - ROUGE-1: {rouge_scores['rouge1']:.4f}")
     print(f" - ROUGE-2: {rouge_scores['rouge2']:.4f}")
     print(f" - ROUGE-L: {rouge_scores['rougeL']:.4f}")
     print(f" - BLEU: {bleu_score:.4f}")
     print(f" - RoBERTa Cos-Sim (CLS): {cos_sim_bert:.4f}")
     print(f" - Qwen3 Cos-Sim (EOS): {cos_sim_qwen:.4f}")
+
 
 if __name__ == "__main__":
     main()

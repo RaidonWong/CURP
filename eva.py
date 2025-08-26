@@ -108,7 +108,7 @@ def compute_cos_sim(predictions, references, model_path, strategy="cls"):
 
 
 def main():
-    print("📊 Loading evaluation data...")
+    print(" Loading evaluation data...")
     data = load_data(input_file)
 
     references = [item["question"] for item in data]
@@ -116,22 +116,22 @@ def main():
 
     assert len(references) == len(predictions), "Mismatch in number of references and predictions!"
 
-    print(f"✅ Loaded {len(references)} samples for evaluation.\n")
+    print(f" Loaded {len(references)} samples for evaluation.\n")
 
-    print("🔄 Computing ROUGE scores...")
+    print(" Computing ROUGE scores...")
     rouge_scores = compute_rouge(predictions, references)
 
-    print("🔄 Computing BLEU score...")
+    print(" Computing BLEU score...")
     bleu_score = compute_bleu(predictions, references)
 
-    print("🔄 Computing RoBERTa embedding similarity (CLS pooling)...")
+    print(" Computing RoBERTa embedding similarity (CLS pooling)...")
     cos_sim_bert = compute_cos_sim(predictions, references, bert_model_path, strategy="cls")
 
-    print("🔄 Computing Qwen3 embedding similarity (EOS pooling)...")
+    print(" Computing Qwen3 embedding similarity (EOS pooling)...")
     cos_sim_qwen = compute_cos_sim(predictions, references, qwen_model_path, strategy="eos")
 
     # Final Results
-    print("\n📈 Final Evaluation Results:")
+    print("\n Final Evaluation Results:")
     print(f" - ROUGE-1:     {rouge_scores['rouge1']:.4f}")
     print(f" - ROUGE-2:     {rouge_scores['rouge2']:.4f}")
     print(f" - ROUGE-L:     {rouge_scores['rougeL']:.4f}")

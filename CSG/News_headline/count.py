@@ -112,7 +112,7 @@ def main():
             filtered_preds.append(pred)
             filtered_refs.append(ref)
 
-    print(f"✅ After filtering: {len(filtered_refs)} samples remain")
+    print(f" After filtering: {len(filtered_refs)} samples remain")
 
     assert len(filtered_refs) == len(filtered_preds), "Mismatch in number of filtered predictions and references!"
 
